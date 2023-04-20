@@ -1,0 +1,1755 @@
+setwd("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022")
+library(Seurat)
+library(tidyr)
+library(dplyr)
+
+D16 = readRDS("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/D16_19_deci_mito_new_res04_07052022.rds")
+DefaultAssay(object = D16) <- "RNA"
+N_all_markers <- FindAllMarkers(object = D16, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.2)
+N_all_markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_log2FC)
+top10 <-N_all_markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC)
+write.table(N_all_markers,"D16_19_mito_all_markers_res04.txt",sep="\t")
+
+
+ave_exp_N  = AverageExpression(D16_deci_s)
+write.table(ave_exp_N$RNA,"D16_only_deci_mRNA.txt", sep = "\t")
+write.table(ave_exp_N$RNA,"D19_only_deci_mRNA.txt", sep = "\t")
+
+ave_exp_N  = AverageExpression(D16)
+write.table(ave_exp_N$RNA,"D16_19_mito_deci_mRNA_res04.txt", sep = "\t")
+
+
+
+
+
+my_cor = cor (ave_exp_N$RNA,method = c("pearson"))
+library(RColorBrewer)
+library(ComplexHeatmap)
+library(viridis)
+col_fun = colorRamp2(c( 0, 0.5, 1),  c("blue", "#fcda79", "red"))
+col_fun <- rev(colorRampPalette(brewer.pal(10, "RdYlBu"))(256))
+Heatmap(my_cor, name="cor" , 
+  col =viridis(100),
+  #col =col_fun,
+  show_row_names = TRUE, cluster_columns = T,cluster_rows = T, gap = unit(0, "mm"),
+  show_column_names = TRUE,
+  km = 0,
+  #row_title_gp = gpar(fontsize = 2),
+  rect_gp = gpar(col = "white", lty = 0.2, lwd = 0.1)
+  
+) 
+
+my_cor = as.data.frame(my_cor)
+my_cor = my_cor[c(16,15,3,18,2,1, 7,9,13, 14, 11,12,8,5,22,4,17,23,24,20,19,25,6,21,10),
+  c(16,15,3,18,2,1, 7,9,13, 14, 11,12,8,5,22,4,17,23,24,20,19,25,6,21,10)]
+
+
+
+Heatmap(my_cor, name="cor" , 
+  col =viridis(100),
+  #col =col_fun,
+  show_row_names = TRUE, cluster_columns = F,cluster_rows = F, gap = unit(0, "mm"),
+  show_column_names = TRUE,
+  km = 0,
+  #row_title_gp = gpar(fontsize = 2),
+  rect_gp = gpar(col = "white", lty = 0.2, lwd = 0.1)
+  
+) 
+
+
+
+library(RColorBrewer)
+library(ggplot2)
+library(ggsci)
+display.brewer.all()
+library("scales")
+
+
+
+########   D16 Stromal cells   ########  
+
+D16_s = subset(D16, sub_pup == "D16")
+library(viridis)
+FeaturePlot(D16_s,c("Slit3"), ncol=1, max.cutoff='q98', cols=viridis(256))+ umap_theme + NoLegend()
+
+pdf("Slit3.pdf", width=10, height=10)
+FeaturePlot(D16_s,c("Slit3"), ncol=1, max.cutoff='q98', cols=viridis(256)) + NoLegend()
+dev.off()
+
+
+
+####  Dot plot for migration gene  ######
+setwd("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022")
+library(Seurat)
+D16 = readRDS("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/D16_19_deci_mito_new_res04_07052022.rds")
+Str = subset(D16, sub_pup == "D16")
+
+Str = subset(D16, seurat_clusters == 0| seurat_clusters == 1| seurat_clusters == 2| seurat_clusters == 6|seurat_clusters == 13|
+    seurat_clusters == 14| seurat_clusters == 15| seurat_clusters == 17)
+Str = subset(Str, sub_pup == "D16")
+
+
+features = c("Cxcr4","Robo1",   "Robo2","Sema3a","Sema3b",  "Sema3c","Sema3d","Vegfa","Vegfb","Vegfd","Pgf","Tmem219")
+
+levels(Str)  = c(
+  "Dec_1","Deci_15",  "Dec_0","Dec_17",		"Dec_2",  "Deci_14",	  
+  "Endo_6","Lymph_13",
+  "Epi_5","Epi_23", "Meso_8" ,"TGC_11",
+  "Mac_3" , "Mac_16","Mono_18",
+  "NK_24", "NK_4","T_7",	"B_9", 	 "Mast_19"	,	"prof_Mac_22","prof_T_21",	"prof_B_20"
+)
+
+
+library(viridis)
+my_col = viridis(256)
+DotPlot(Str,
+  assay = NULL,
+  features,
+  cols = c("white","#C51B7D")
+)  + coord_flip()
+
+
+
+
+
+
+
+
+######################     Dot plot  3-20-2022  #######
+library(viridis)
+library(Seurat)
+
+#### small cluter
+
+features = c("Slit3","Mfap4", #Dec0
+  "Hsd11b2","Aldh1a2","Dio2","Bmp2", #Dec1
+  "Cyp11a1","Prl8a2", #Dec2
+  "Notch3", # Peri10 
+  "Myh11", # Myofib_9
+  "Igfbp3", #Endo_6
+  "Lyve1", #Lyph_12
+  "Epcam", # Epi_5
+  "Cldn3", "Sox17",  #Epi16
+  "Upk3b", # Meso_8
+  "Prl7b1", # TGC_11 
+  "Lyz2", #Mac_3
+  "S100a8", #Neutri_13
+  "Gzmg","Gzma","Gzmb", ##NK_17
+  "Cd3g", #NKT_4
+  "Jchain", # B_7
+  "Cpa3",# Mast_14
+  "Mki67"#proNK_15
+)
+
+
+levels(D16)  = c(
+  "Dec_1","Deci_15",  "Dec_0","Dec_17",		"Dec_2",  "Deci_14",	  "Peri_12", "Myofib_10",
+  "Endo_6","Lymph_13",
+  "Epi_5","Epi_23", "Meso_8" ,"TGC_11",
+  "Mac_3" , "Mac_16","Mono_18", 
+  "NK_24", "NK_4","T_7",	"B_9", 	 "Mast_19"	,	"prof_Mac_22","prof_T_21",	"prof_B_20"
+)
+
+
+library(viridis)
+DotPlot(D16,
+  assay = NULL,
+  features,
+  #cols = viridis(10)
+  cols = c("white","#C51B7D"),
+)  + RotatedAxis() 
+
+
+
+
+
+####  cell number of str   #######
+library(RColorBrewer)
+library(ggplot2)
+library(ggsci)
+display.brewer.all()
+library("scales")
+show_col(pal_lancet("lanonc")(9))
+
+my_meta = D16@meta.data
+my_meta$seurat_clusters   = as.character(my_meta$seurat_clusters)
+
+#my_meta = as.data.frame(my_meta)
+my_meta = my_meta[my_meta$seurat_clusters != "15",]
+
+newID = c(	"Deci_0",	"Deci_1",	"Deci_2",	"Mac_3",	"NKT_4",	"Epi_5",	"Endo_6",	"B_cell_7",	"Meso_8",	"Myofib_9",	"Peri_10",	"TGC_11",	"Lyph_12",	"Neu_13",	"Mast_14",	"prolif_NKT_15",	"Epi_16",	"NK_17")
+newdf = data.frame(c(0:14,16,17,18),newID)
+
+a = match(my_meta$seurat_clusters, newdf$c.0.14..16..17..18.)
+my_meta$seurat_clusters =newdf$newID[a]
+
+#####  change the order of factor be levels
+my_meta$seurat_clusters  = as.factor(my_meta$seurat_clusters)
+my_meta$seurat_clusters = factor(my_meta$seurat_clusters, levels = c(	"Deci_0",	"Deci_1",	"Deci_2",	"Mac_3",	"NKT_4",	"Epi_5",	"Endo_6",	"B_cell_7",	"Meso_8",	"Myofib_9",	"Peri_10",	"TGC_11",	"Lyph_12",	"Neu_13",	"Mast_14",	"prolif_NKT_15",	"Epi_16",	"NK_17"))
+
+
+library(ggplot2)
+library(viridis)
+library("RColorBrewer")
+
+my_col=colorRampPalette(c("red", "yellow", "blue"))(3)
+my_col=colorRampPalette(c("black", "yellow", "red"))(500)
+col_fun <- rev(colorRampPalette(brewer.pal(10, "RdYlBu"))(256))
+
+my_col = colorRampPalette(brewer.pal(name="Dark2", n = 3))  ## Good
+my_col = brewer.pal(name="Dark2", n = 8)[1:3]  ## Good
+
+
+
+my_meta_D16 = my_meta[my_meta$sub_pup %in% c("D16"),]
+my_meta_D19 = my_meta[my_meta$sub_pup %in% c("D19"),]
+
+t_D16 = as.data.frame(table(my_meta_D16$seurat_clusters))[c(1,2,3),]
+t_D16 = as.data.frame(table(my_meta_D19$seurat_clusters))[c(1,2,3),]
+
+t_D16$fraction = t_D16$Freq / sum(t_D16$Freq )
+t_D16$ymax = cumsum(t_D16$fraction)
+t_D16$ymin = c(0, head(t_D16$ymax, n = -1))
+
+p<-ggplot(t_D16, aes(fill = Var1,ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5)) +
+  geom_rect(show.legend = F,alpha=0.9) +
+  scale_fill_manual(values = my_col)+
+  coord_polar(theta = "y") + 
+  xlim(c(0, 4))
+
+p+theme_light() +
+  theme(panel.grid=element_blank()) + 
+  theme(axis.text=element_blank()) +
+  theme(axis.ticks=element_blank()) + 
+  theme(panel.border=element_blank()) + 
+  geom_text(aes(x = 4, y = ((ymin+ymax)/2),label = Var1) ,size=4)+
+  geom_text(aes(x = 3.5, y = ((ymin+ymax)/2),label = fraction) ,size=3.6)
+
+
+
+
+
+
+####################   3-20-2022 str gene comparsion #############
+
+library(ggplot2)
+library(viridis)
+D16_1 = subset(D16, sub_pup == "D16")
+
+DefaultAssay(D16_1)
+NC_exp_RNA= AverageExpression(D16_1)
+
+NC_exp = NC_exp_RNA$RNA
+NC_exp_s = NC_exp[,c(1,2,3,15,16,18)]  ## str
+
+
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(UpSetR)
+library(ChIPseeker)
+
+library("dplyr")
+library("ggplot2")
+library("reshape2")
+library("TCseq")
+
+exp_s_2= NC_exp_s[rowSums(NC_exp_s) > 1,]
+c= exp_s_2
+c = as.data.frame(c)
+#c$GeneID  = row.names(c)
+data <- as.matrix(c[,c(4:6)])
+data <- as.matrix(c[,c(1:3)])
+
+tca <- timeclust(data, algo = "cm", k = 6, standardize = TRUE)
+sub_data=subset(data,row.names(data) %in% row.names(tca@membership))  ## generate the df the same size as tca
+set.seed(9)
+p <- timeclustplot(tca, 
+  categories="day",
+  cols = 3, 
+  axis.text.size=12,
+  legend.text.size=10, 
+  legend.title.size=10,
+  title.size=12,
+  axis.title.size=12
+)
+
+my_names = row.names( data.frame( sub_data[tca@cluster == 2, ]))
+ID_2 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_names = row.names( data.frame( sub_data[tca@cluster == 6, ]))
+ID_4 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_names = row.names( data.frame( sub_data[tca@cluster == 1, ]))
+ID_6 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+
+
+my_comp = list(
+  DS0 =ID_2$ENTREZID, 
+  DS1 =ID_4$ENTREZID,
+  DS2 = ID_6$ENTREZID
+) 
+
+x <- compareCluster(my_comp, fun = "enrichKEGG", organism     = "mmu")
+
+library("RColorBrewer")
+
+library(viridis)
+x@compareClusterResult$logpVal = -log(x@compareClusterResult$p.adjust,10)
+
+dotplot(x, showCategory = 20,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+x=DOSE::setReadable(x, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+write.table(x@compareClusterResult, "Deci_14_15_17_KEGG_genes_07022022.txt", sep = "\t")
+
+
+library(org.Mm.eg.db)
+y <- compareCluster(my_comp, fun = "enrichGO", OrgDb  = "org.Mm.eg.db")
+y@compareClusterResult$logpVal = -log(y@compareClusterResult$p.adjust,10)
+dotplot(y, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+
+########   GO heatmap 
+
+my_term = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/virus_infection_GO_term_summary_20220706_041618.txt", header = T , sep = "\t")
+
+my_term = my_term[!duplicated(my_term$MGI.Gene.Marker.ID),]
+sub_data = subset(NC_exp,row.names(NC_exp) %in% my_term$Symbol) 
+sub_data = subset(NC_exp_s,row.names(NC_exp_s) %in% my_term$Symbol) 
+
+library(ComplexHeatmap)
+library(pheatmap)
+library(gplots)
+library(viridis)
+
+b = as.matrix(sub_data)
+b = b[rowSums(b) > 0,]
+mat_scaled = t(apply(b, 1, scale))
+#row.names(mat_scaled)= secret_s$Symbol
+colnames(mat_scaled)= colnames(b)
+
+Heatmap(mat_scaled, name="Sceretory" , col =viridis(100), km = 4,
+  show_row_names = TRUE, cluster_columns = F,cluster_rows = T, gap = unit(0, "mm"),show_column_names = TRUE,rect_gp = gpar(col = "white", lty = 0, lwd = 0.1)) 
+#
+
+
+
+
+######       Addmodulescore 5-2-2022   ##########
+library(RColorBrewer)
+library(ggplot2)
+library(ggsci)
+display.brewer.all()
+
+library("scales")
+show_col(pal_lancet("lanonc")(9))
+my_col = colorRampPalette(pal_lancet("lanonc")(9))(18)
+show_col(my_col)
+my_col = colorRampPalette(pal_lancet("lanonc")(9))(18)
+
+my_col = brewer.pal(11,"PRGn")
+
+
+
+my_gene = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellular_senescence_GO_term_summary_20220708_064201.txt", header = T, sep = "\t")
+
+D16_1 <- AddModuleScore(
+  object = D16,
+  features = list(my_gene$Symbol),
+  ctrl = 5,
+  name = "Deci01"
+)
+
+
+library(viridis)
+FeaturePlot( D16_1, features = "Deci011",label = F, max.cutoff = 0.1,  cols = viridis(200), split.by = "sub_pup")   
+
+
+
+
+
+
+################ 7-11-2022  str specific genes and KEGG analysis  ########
+
+DefaultAssay(object = D16) <- "RNA"
+
+D16_s = subset(D16, sub_pup == "D16")
+
+NC_exp_RNA = AverageExpression(D16_s)
+NC_exp = NC_exp_RNA$RNA
+NC_exp_s = NC_exp[,c(1,2,3)]  ## str
+#NC_exp_s = NC_exp[,c(5,6,11)]  ## Epi
+colnames(NC_exp_s) = paste("D16",colnames(NC_exp_s), sep = "_")
+NC_exp_s = as.data.frame(NC_exp_s)
+NC_exp_s$rowSum_1 = rowSums(NC_exp_s)
+NC_exp_s1 = NC_exp_s[NC_exp_s$rowSum_1>0.1,]
+
+NC_exp_s1$D16_1_spe = NC_exp_s1$D16_Dec_0 / (NC_exp_s1$D16_Dec_1+NC_exp_s1$D16_Dec_2+0.1)
+NC_exp_s1$D16_2_spe = NC_exp_s1$D16_Dec_1 / (NC_exp_s1$D16_Dec_0+NC_exp_s1$D16_Dec_2+0.1)
+NC_exp_s1$D16_3_spe = NC_exp_s1$D16_Dec_2 / (NC_exp_s1$D16_Dec_0+NC_exp_s1$D16_Dec_1+0.1)
+
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(org.Hs.eg.db)
+library(UpSetR)
+library(ChIPseeker)
+
+NC_exp_s1 = NC_exp_s1[order(NC_exp_s1$D16_1_spe,decreasing = T),]
+my_names = row.names(NC_exp_s1)[1:100]
+ID_1 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+NC_exp_s1 = NC_exp_s1[order(NC_exp_s1$D16_2_spe,decreasing = T),]
+my_names = row.names(NC_exp_s1)[1:100]
+ID_2 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+NC_exp_s1 = NC_exp_s1[order(NC_exp_s1$D16_3_spe,decreasing = T),]
+my_names = row.names(NC_exp_s1)[1:100]
+ID_3 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+
+
+my_comp = list(
+  Dec_0_d =ID_1$ENTREZID, 
+  Dec_1_d =ID_2$ENTREZID, 
+  Dec_2_d =ID_3$ENTREZID
+)  
+
+
+
+x <- compareCluster(my_comp, fun = "enrichGO", OrgDb='org.Mm.eg.db',
+  #ont        = "ALL",
+  #pAdjustMethod = "BH",
+  pvalueCutoff = 0.05,#0.01
+  qvalueCutoff = 0.5)
+
+
+x <- compareCluster(my_comp, fun = "enrichKEGG", organism     = "mmu", pvalueCutoff = 0.2,#0.01
+  qvalueCutoff = 0.2)
+
+library(viridis)
+x@compareClusterResult$logpVal = -log(x@compareClusterResult$p.adjust,10)
+dotplot(x, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+
+x1 <- compareCluster(my_comp, fun = "enrichKEGG", organism     = "mmu", pvalueCutoff = 0.5,#0.01
+  qvalueCutoff = 0.5)
+
+library(viridis)
+x1@compareClusterResult$logpVal = -log(x1@compareClusterResult$p.adjust,10)
+dotplot(x1, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+
+
+
+################  7-7-2022  str gene expression comparison  ##############
+library(Seurat)
+library(monocle)
+library(ggplot2)
+library(dplyr)
+library("Matrix")
+library("DDRTree")
+library("pheatmap")
+
+
+D16_s = subset(D16, sub_pup == "D16")
+D19_s = subset(D16, sub_pup == "D19")
+
+NC_exp_RNA = AverageExpression(D16_s)
+NC_exp = NC_exp_RNA$RNA
+NC_exp_s = NC_exp[,c(1,2,3)]  ## str
+colnames(NC_exp_s) = paste("D16",colnames(NC_exp_s), sep = "_")
+
+Thin_exp_RNA = AverageExpression(D19_s)
+Thin_exp = Thin_exp_RNA$RNA
+Thin_exp_s = Thin_exp[,c(1,2,3)]  ## str
+colnames(Thin_exp_s) = paste("D19",colnames(Thin_exp_s), sep = "_")
+
+
+com_exp = cbind(NC_exp_s, Thin_exp_s)
+write.table(com_exp, "D16_19_str_exp.txt", sep = "\t" , quote = F , row.names = T)
+
+
+library(edgeR)
+library(ggplot2)
+D=DGEList(counts=com_exp)
+D=calcNormFactors(D)
+D=estimateCommonDisp(D)
+D=estimateTagwiseDisp(D)
+
+D$samples$group=c(1:6)
+
+et_1=exactTest(D,pair = c(4,1) )
+p_val_1=cbind(2^-et_1$table$logFC,et_1$table$PValue)
+
+et_2=exactTest(D,pair = c(5,2) )
+p_val_2=cbind(2^-et_2$table$logFC,et_2$table$PValue)
+
+et_3=exactTest(D,pair = c(6,3))
+p_val_3=cbind(2^-et_3$table$logFC,et_3$table$PValue)
+
+data_value=cbind(D$counts, D$pseudo.counts, p_val_1,p_val_2, p_val_3)
+colnames(data_value) = c(  colnames(com_exp),
+  paste(colnames(com_exp),"_adj",""), 
+  "Deci_0_FC","Deci_0_p", "Deci_1_FC","Deci_1_p","Deci_2_FC","Deci_2_p") 
+
+data_value = data.frame(data_value)
+
+data_value$Deci_0_flag=cut(data_value$Deci_0_FC,breaks=c(-Inf,0.75,1.5,Inf),labels=c("-1","0","1"))
+
+data_value$Deci_0_flag=cut(data_value$Deci_0_FC,breaks=c(-Inf,0.5,2,Inf),labels=c("-1","0","1"))
+
+ggplot(data_value,aes(log2(D16_Dec_0),log2(D19_Dec_0), color = Deci_0_flag)) + geom_point() + 
+  xlim(-5,10) + ylim(-5,10) + scale_color_manual(values =c("#0A9DCD","grey","#FB638A")) + theme_set(theme_bw()) + 
+  theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) 
+
+data_value$Deci_1_flag=cut(data_value$Deci_1_FC,breaks=c(-Inf,0.75,1.5,Inf),labels=c("-1","0","1"))
+data_value$Deci_1_flag=cut(data_value$Deci_1_FC,breaks=c(-Inf,0.5,2,Inf),labels=c("-1","0","1"))
+
+
+ggplot(data_value,aes(log2(D16_Dec_1),log2(D19_Dec_1), color = Deci_1_flag)) + geom_point() + 
+  xlim(-5,10) + ylim(-5,10) + scale_color_manual(values =c("#0A9DCD","grey","#FB638A")) + theme_set(theme_bw()) + 
+  theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) 
+
+data_value$Deci_2_flag = cut(data_value$Deci_2_FC,breaks = c(-Inf,0.75,1.5,Inf),labels = c("-1","0","1"))
+
+data_value$Deci_2_flag = cut(data_value$Deci_2_FC,breaks = c(-Inf,0.5,2,Inf),labels = c("-1","0","1"))
+
+ggplot(data_value, aes(log2(D16_Dec_2),log2(D19_Dec_2), color = Deci_2_flag)) + geom_point() + 
+  xlim(-5,10) + ylim(-5,10) + scale_color_manual(values = c("#0A9DCD","grey","#FB638A")) + theme_set(theme_bw()) + 
+  theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) 
+
+data_value_s = data_value[data_value$Deci_0_flag == 1 | data_value$Deci_0_flag == -1 | data_value$Deci_1_flag == 1 | data_value$Deci_1_flag == -1 | data_value$Deci_2_flag == 1 | data_value$Deci_2_flag == -1, ]
+
+
+data_value_s1 = data_value_s[,1:6]
+
+library(ComplexHeatmap)
+b = as.matrix(data_value_s1)
+mat_scaled = t(apply(b, 1, scale))
+colnames(mat_scaled)= colnames(b)
+
+mat_scaled = mat_scaled[,c(1,4,2,5,3,6)]
+
+Heatmap(nor_df_2, name="" , 
+  #col =viridis(100),
+  col =my_col,
+  show_row_names = TRUE, cluster_columns = F,cluster_rows = F, gap = unit(0, "mm"),
+  show_column_names = TRUE,
+  km = 0,
+  #row_title_gp = gpar(fontsize = 2),
+  rect_gp = gpar(col = "white", lty = 1, lwd = 0.5)
+  
+) 
+
+
+
+
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(org.Hs.eg.db)
+library(UpSetR)
+library(ChIPseeker)
+
+small_df_1 = data_value[data_value$Deci_0_flag == -1 & data_value$D16_Dec_0 > 0.1, ]  
+small_df_1 = small_df_1[order(small_df_1$Deci_0_FC,decreasing = F),]
+small_df_1 = small_df_1[1:300,]
+
+small_df_2 = data_value[data_value$Deci_0_flag == 1 & data_value$D16_Dec_0 > 0.1, ]   
+
+small_df_3 = data_value[data_value$Deci_1_flag == -1 & data_value$D16_Dec_1 > 0.1, ] 
+small_df_3 = small_df_3[order(small_df_3$Deci_1_FC,decreasing = F),]
+small_df_3 = small_df_3[1:300,]
+
+small_df_4 = data_value[data_value$Deci_2_flag == 1 & data_value$D16_Dec_1 > 0.1, ]   
+
+small_df_5 = data_value[data_value$Deci_2_flag == -1 & data_value$D16_Dec_2 > 0.1, ]  
+small_df_5 = small_df_5[order(small_df_5$Deci_2_FC,decreasing = F),]
+small_df_5 = small_df_5[1:300,]
+
+small_df_6 = data_value[data_value$Deci_2_flag == 1 & data_value$D16_Dec_2 > 0.1 , ]   
+
+my_names = row.names(small_df_1)
+ID_1 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_names = row.names(small_df_2)
+ID_2 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_names = row.names(small_df_3)
+ID_3 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+
+my_names = row.names(small_df_4)
+ID_4 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_names = row.names(small_df_5)
+ID_5 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_names = row.names(small_df_6)
+ID_6 <- bitr(my_names, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+
+my_comp = list(
+  Dec_0_d =ID_1$ENTREZID, 
+  Dec_1_d =ID_3$ENTREZID, 
+  Dec_2_d =ID_5$ENTREZID,
+  Dec_0_u =ID_2$ENTREZID,
+  Dec_1_u =ID_4$ENTREZID,
+  Dec_2_u =ID_6$ENTREZID
+)  
+
+
+my_comp = list(
+  proStr_up =ID_4$ENTREZID, 
+  
+  proStr_d =ID_3$ENTREZID
+)  
+
+x <- compareCluster(my_comp, fun = "enrichGO", OrgDb='org.Mm.eg.db',
+  #ont        = "ALL",
+  #pAdjustMethod = "BH",
+  pvalueCutoff = 0.05,#0.01
+  qvalueCutoff = 0.5)
+
+
+x <- compareCluster(my_comp, fun = "enrichKEGG", organism     = "mmu", pvalueCutoff = 0.2,#0.01
+  qvalueCutoff = 0.2)
+
+library(viridis)
+x@compareClusterResult$logpVal = -log(x@compareClusterResult$p.adjust,10)
+dotplot(x, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+x=DOSE::setReadable(x, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+
+x@compareClusterResult[x@compareClusterResult$Description %in% "Relaxin signaling pathway",]
+
+write.table(x@compareClusterResult, "DEG_genes_in_str_012.txt", sep = "\t", row.names = F)
+
+library("RColorBrewer")
+my_col=colorRampPalette(c("#e72653", "#2eb27d", "black"))(500)
+my_col=colorRampPalette(c("red", "yellow", "blue"))(10)
+
+library(viridis)
+dotplot(x, showCategory=10) + scale_color_gradientn(colours = rev(viridis(100)))  #, limits = c(1.5,3))
+
+cnetplot(x, foldChange=NULL, circular = TRUE,  showCategory = 5 ,colorEdge = TRUE)
+
+
+
+
+my_geneID_1 = x@compareClusterResult[x@compareClusterResult$Description %in% "Wnt signaling pathway",]
+gene_string = strsplit(my_geneID_1$geneID[1], "/")
+my_gene_list_1 = gene_string[[1]]
+
+
+my_geneID_2 = x@compareClusterResult[x@compareClusterResult$Description %in% "Signaling pathways regulating pluripotency of stem cells",]
+gene_string = strsplit(my_geneID_2$geneID[1], "/")
+my_gene_list_2 = gene_string[[1]]
+
+D16_1 <- AddModuleScore(
+  object = D16,
+  features = list(my_gene_list_2),
+  ctrl = 5,
+  name = "Stemness"
+)
+FeaturePlot( D16_1, features = "Stemness1",label = F, max.cutoff = 0.5,  cols = viridis(200), split.by = "sub_pup")   
+
+
+D16_1 <- AddModuleScore(
+  object = D16,
+  features = list(my_gene_list_1),
+  ctrl = 5,
+  name = "Wnt_1"
+)
+FeaturePlot( D16_1, features = "Wnt_11",label = F, max.cutoff = 0.5,  cols = viridis(200), split.by = "sub_pup")   
+
+####   cirle plot
+set.seed(123)
+x <- list("Regulation of pluripotency"= my_gene_list_2, "Wnt signaling" =my_gene_list_1 )
+cnetplot(x, circular = T,colorEdge = TRUE,shadowtext = "none")
+
+
+
+
+
+########    ggpubR  5-2-2022   #######
+library(pheatmap)
+library(gplots)
+library(RColorBrewer)
+library(ggplot2)
+library(ComplexHeatmap)
+library(gplots)
+library(viridis)
+library(ggpubr)
+
+library(Seurat)
+
+stro = subset(D16, subset = seurat_clusters == "0" | seurat_clusters == "1" |seurat_clusters == "2")
+
+
+
+stro_nor = subset(stro, sub_pup == "D16" )
+stro_nor_exp = as.data.frame(as.matrix(stro_nor@assays$RNA@data))
+gene_name_list=as.character(row.names(stro_nor_exp))
+stro_nor_exp$gene_ID = row.names(stro_nor_exp)
+
+stro_thin = subset(stro, sub_pup == "D19" )
+stro_thin_exp = as.data.frame(as.matrix(stro_thin@assays$RNA@data))
+gene_name_list=as.character(row.names(stro_thin_exp))
+stro_thin_exp$gene_ID = row.names(stro_thin_exp)
+
+
+GOI_1 = c("Ror2")
+stro_nor_exp_t = stro_nor_exp[stro_nor_exp$gene_ID %in% GOI_1, ]
+
+
+GOI_2 = c("Ror2")
+stro_thin_exp_t = stro_thin_exp[stro_thin_exp$gene_ID %in% GOI_2, ]
+
+
+
+
+
+library(dplyr)
+library(reshape2)
+stro_nor_exp_t_m = melt(stro_nor_exp_t)
+cell_label = as.data.frame(stro_nor@active.ident)
+cell_label$cell_ID = row.names(cell_label)
+stro_nor_exp_t_m_merged = merge(stro_nor_exp_t_m,cell_label, by.x = "variable", by.y = "cell_ID", all.x = T  )
+stro_nor_exp_t_m_merged_2 = stro_nor_exp_t_m_merged[stro_nor_exp_t_m_merged$value>0,]   ####   只保留有表达的细胞
+colnames(stro_nor_exp_t_m_merged_2) = c("variable", "gene_ID" ,   "value", "celltype")
+stro_nor_exp_t_m_merged_2$flag = "D16"
+
+stro_thin_exp_t_m = melt(stro_thin_exp_t)
+cell_label = as.data.frame(stro_thin@active.ident)
+cell_label$cell_ID = row.names(cell_label)
+stro_thin_exp_t_m_merged = merge(stro_thin_exp_t_m,cell_label, by.x = "variable", by.y = "cell_ID", all.x = T  )
+stro_thin_exp_t_m_merged_2 = stro_thin_exp_t_m_merged[stro_thin_exp_t_m_merged$value>0,]  ####   只保留有表达的细胞
+colnames(stro_thin_exp_t_m_merged_2) = c("variable", "gene_ID" ,   "value", "celltype")
+stro_thin_exp_t_m_merged_2$flag = "D19"
+
+
+
+Stro_all = rbind(stro_nor_exp_t_m_merged_2,stro_thin_exp_t_m_merged_2)
+
+
+
+library(ggpubr)
+
+my_comparisons <- list( c("D16", "D19" ))
+
+p = ggviolin(Stro_all, x = "flag", y = "value", 
+  fill = "celltype",
+  #ylim = c(-0.5,1),
+  color =  "celltype",
+  palette = c("#00AFBB", "#E7B800", "#FC4E07","#F39B7FB2","#FC4EA7"),
+  add = "boxplot", 
+  add.params = list(fill = NULL,color = "black")
+  #trim = T
+  
+) 
+
+p
+
+facet(p, facet.by = "celltype")+stat_compare_means(comparisons = my_comparisons, label = "p.signif") + stat_compare_means(label.y = 4)  
+
+
+
+
+
+
+############   cell phone DB  ###############
+
+
+library(GGally)
+library(ggplot2)
+library(reshape2)
+library(corrplot)
+library(ComplexHeatmap)
+library(viridis)
+
+nor_count = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellphoneDB_mito_res04/D16/out/count_network.txt", header = T, sep = "\t")
+nor_count = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellphoneDB_mito_res04/D19/out/count_network.txt", header = T, sep = "\t")
+
+nor_df = dcast(nor_count, SOURCE ~ TARGET)
+
+row.names(nor_df) = nor_df$SOURCE
+colnames(nor_df) = colnames(nor_df) 
+
+nor_df = nor_df[,-1]
+
+
+
+library(circlize)
+my_col = colorRamp2(c( 0, 120, 237),  c("blue", "#fcda79", "red"))
+
+library("RColorBrewer")
+my_col = colorRampPalette(brewer.pal(name="Dark2", n = 8))(8) 
+
+library(ggplot2)
+library(ggsci)
+display.brewer.all()
+
+#my_col = rev (colorRampPalette(brewer.pal(name="PiYG", n = 11))(17) )
+new_order =  c(	
+  "Deci_15",
+  "Dec_1",
+
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Myofib_10",
+  "prof_Mac_22",
+  
+  "Meso_8",
+  "prof_B_20",
+  "Deci_14",
+  "Mac_3",
+  "Dec_2",
+
+  "Peri_12",
+  
+  "Lymph_13",
+  "Mac_16",
+
+
+  "prof_T_21",
+  "NK_4",
+
+  "T_7",
+  "Epi_5",
+  "Mono_18",
+  "Mast_19",
+  "Epi_23",
+  "TGC_11",
+
+  "NK_24",
+  "B_9"
+
+  )
+
+new_ID = match(new_order,colnames(nor_df))
+nor_df_2 = nor_df[new_ID,new_ID]
+row.names(nor_df_2) = new_order
+
+my_col = colorRampPalette(brewer.pal(name="YlGnBu", n = 9))(17) 
+Heatmap(nor_df_2, name="NC" , 
+  #col =viridis(256),
+  col =my_col,
+  show_row_names = TRUE, cluster_columns = F,cluster_rows = F, gap = unit(0, "mm"),
+  show_column_names = TRUE,
+  km = 0,
+  #row_title_gp = gpar(fontsize = 2),
+  rect_gp = gpar(col = "white", lty = 1, lwd = 0.5)
+  
+) 
+
+
+
+
+
+
+
+##########  circlize 11-18-2020  ######
+library(circlize)
+library(RColorBrewer)
+library(ggplot2)
+library(reshape2)
+
+nor_count1 = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellphoneDB_mito_res04/D16/out/count_network.txt", header = T, sep = "\t")
+
+m = dcast(nor_count1, SOURCE ~ TARGET)
+n = as.matrix(m[1:25,2:26])
+row.names(n) = m$SOURCE
+
+my_order =    c(
+  "Deci_15",
+  "Dec_1",
+  "Mac_3",
+  "prof_Mac_22",
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Myofib_10",
+  "Meso_8",
+  "prof_B_20",
+  "Lymph_13",
+  "Mac_16",
+  "Peri_12",
+  "Deci_14",
+  "Dec_2",
+  "prof_T_21",
+  "NK_4",
+  "Mono_18",
+  "T_7",
+  "Epi_5",
+  "Mast_19",
+  "Epi_23",
+  "TGC_11",
+  "B_9",
+  "NK_24"
+)
+
+mm = match( my_order, rownames(n))
+n = n[mm,mm]
+
+my_col = colorRampPalette(brewer.pal(7,"Dark2"))(25) 
+my_col = rev(colorRampPalette(brewer.pal(name="YlGnBu", n = 9))(25) )
+library(scales)
+my_col = hue_pal()(25)
+
+chordDiagram(n,
+  annotationTrack = c("name", "grid"),
+  annotationTrackHeight = c(0.01, 0.025),
+  directional = F,
+  diffHeight = 0.05,
+  grid.col = my_col, 
+  transparency = 0.1
+
+)
+
+
+#D19
+nor_count2 = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellphoneDB_mito_res04/D19/out/count_network.txt", header = T, sep = "\t")
+
+m = dcast(nor_count2, SOURCE ~ TARGET)
+n = as.matrix(m[1:25,2:26])
+row.names(n) = m$SOURCE
+
+my_order =    c(
+  "Deci_15",
+  "Dec_1",
+  "Mac_3",
+  "prof_Mac_22",
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Myofib_10",
+  "Meso_8",
+  "prof_B_20",
+  "Lymph_13",
+  "Mac_16",
+  "Peri_12",
+  "Deci_14",
+  "Dec_2",
+  "prof_T_21",
+  "NK_4",
+  "Mono_18",
+  "T_7",
+  "Epi_5",
+  "Mast_19",
+  "Epi_23",
+  "TGC_11",
+  "B_9",
+  "NK_24"
+)
+
+mm = match( my_order, rownames(n))
+n = n[mm,mm]
+
+my_col = colorRampPalette(brewer.pal(7,"Dark2"))(25) 
+my_col = hue_pal()(25)
+chordDiagram(n,
+  annotationTrack = c("name", "grid"),
+  annotationTrackHeight = c(0.01, 0.025),
+  directional = F,
+  diffHeight = 0.05,
+  grid.col = my_col, 
+  transparency = 0.1
+  )
+
+
+
+
+
+
+
+##############  Cell interaction  5-1-2022  ############
+
+library(dplyr)
+library(reshape2)
+library(pheatmap)
+library(gplots)
+library(RColorBrewer)
+library(ggplot2)
+library(ComplexHeatmap)
+library(ComplexHeatmap)
+library(pheatmap)
+library(gplots)
+library(viridis)
+
+mean_sig_nor =  read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellphoneDB_mito_res04/D16/out/significant_means.txt", sep = "\t", header = T)
+
+
+mean_sig = mean_sig_nor
+mean_sig[is.na(mean_sig)] = 0
+mean_sig_s = mean_sig[,c(2,12,13:ncol(mean_sig))]
+mean_sig_s = mean_sig_s[mean_sig_s$rank< 0.5 ,]
+mean_sig_s_m = melt(mean_sig_s,id.vars  = c("interacting_pair","rank"))
+mean_sig_s_m = mean_sig_s_m[mean_sig_s_m$value>0.5,]
+mean_sig_s_m$flag = "D16"
+#mean_sig_s_m$flag = "D19"
+
+mean_sig_s_m %>% ggplot(aes(x= variable , y = interacting_pair, color = rank  , size = value )) + 
+  geom_point() + 
+  cowplot::theme_cowplot() + 
+  theme(axis.line  = element_blank()) +
+  ylab('') +
+  theme(axis.ticks = element_blank())+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  scale_color_gradientn(colours = viridis(100),limits = c(0.00,0.05), oob = scales::squish, name = 'pValue')  
+
++ RotatedAxis()
+
+
+a = c(
+  "Deci_15",
+  "Dec_1",
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Lymph_13"
+  
+  )
+b = c(
+  "Deci_15",
+  "Dec_1",
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Lymph_13"
+  
+)
+
+m=""
+for (i in 1:6){
+  for (j in 1:6){
+    m[6*(i-1)+j] = paste(a[i],b[j], sep =".")
+  }
+}
+
+int_mean_s_m_s = mean_sig_s_m[mean_sig_s_m$variable %in% m,]
+#int_mean_s_m_s = mean_sig_s_m
+
+int_mean_s_m_s =int_mean_s_m_s[!grepl("complex", int_mean_s_m_s$interacting_pair),]
+int_mean_s_m_s =int_mean_s_m_s[!grepl("EPHA", int_mean_s_m_s$interacting_pair),]
+int_mean_s_m_s =int_mean_s_m_s[!grepl("EFN", int_mean_s_m_s$interacting_pair),]
+#int_mean_s_m_s =int_mean_s_m_s[!grepl("FZD", int_mean_s_m_s$interacting_pair),]
+#int_mean_s_m_s =int_mean_s_m_s[!grepl("TGF", int_mean_s_m_s$interacting_pair),]
+
+
+my_path = c( 
+  "WNT5A_ROR2","BMP2_SMO","SELP_CD34","PDGFB_PDGFRA","PTN_PTPRS","IGF1_IGF1R","GRN_SORT1","GPR1_RARRES2","WNT4_SMO",
+  "VEGFD_KDR","TTR_DDR1","RSPO3_LGR6",
+  "NRP1_VEGFB","FLT1_VEGFB","FLT1_PGF","PDGFRA_PDGFC","WNT5A_FZD2",
+  "ANGPT2_TEK","VEGFD_FLT4",
+  "TGFB2_TGFBR3","NRP2_PGF","NRP2_SEMA3C",
+  "NRP2_VEGFA","EDN2_EDNRA",
+  "TEK_ANGPT4","NOTCH1_DLL4"
+  )
+  
+ 
+
+int_mean_s_m_s = int_mean_s_m_s[int_mean_s_m_s$interacting_pair %in% my_path, ]
+
+int_mean_s_m_s$interacting_pair = factor(int_mean_s_m_s$interacting_pair, levels = c("WNT5A_ROR2", "WNT5A_FZD2","TGFB2_TGFBR3","PDGFRA_PDGFC","PDGFB_PDGFRA",
+  "IGF1_IGF1R","BMP2_SMO", "PTN_PTPRS", 
+  "TNFRSF11B_TNFSF10", 
+  "VEGFD_KDR", "VEGFD_FLT4", "TEK_ANGPT4","SELP_CD34" ,"NRP2_VEGFA" ,"NRP2_SEMA3C","NRP2_PGF","NRP1_VEGFB","NOTCH1_DLL4","FLT1_VEGFB","FLT1_PGF","ANGPT2_TEK" ))
+
+int_mean_s_m_s %>% ggplot(aes(x= variable , y = interacting_pair, color = rank  , size = value )) + 
+  geom_point() + 
+  cowplot::theme_cowplot() + 
+  theme(axis.line  = element_blank()) +
+  ylab('') +
+  theme(axis.ticks = element_blank())+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  scale_color_gradientn(colours = viridis(100),limits = c(0.00,0.05), oob = scales::squish, name = 'pValue')  
+
+
+
+
+
+mean_sig_thin =  read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/cellphoneDB_mito_res04/D19/out/significant_means.txt", sep = "\t", header = T)
+mean_sig = mean_sig_thin
+mean_sig[is.na(mean_sig)] = 0
+mean_sig_s = mean_sig[,c(2,12,13:ncol(mean_sig))]
+mean_sig_s = mean_sig_s[mean_sig_s$rank< 0.5 ,]
+mean_sig_s_sm = melt(mean_sig_s,id.vars  = c("interacting_pair","rank"))
+mean_sig_s_sm = mean_sig_s_sm[mean_sig_s_sm$value>0.5,]
+mean_sig_thin_s_m = mean_sig_s_sm
+mean_sig_thin_s_m$flag = "D19"
+
+a = c(
+  "Deci_15",
+  "Dec_1",
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Lymph_13"
+  
+)
+b = c(
+  "Deci_15",
+  "Dec_1",
+  "Endo_6",
+  "Dec_17",
+  "Dec_0",
+  "Lymph_13"
+  
+)
+
+m=""
+for (i in 1:6){
+  for (j in 1:6){
+    m[6*(i-1)+j] = paste(a[i],b[j], sep =".")
+  }
+}
+
+mean_sig_thin_s_m_s = mean_sig_thin_s_m[mean_sig_thin_s_m$variable %in% m,]
+#mean_sig_thin_s_m_s = mean_sig_thin_s_m
+
+mean_sig_thin_s_m_s =mean_sig_thin_s_m_s[!grepl("complex", mean_sig_thin_s_m_s$interacting_pair),]
+mean_sig_thin_s_m_s =mean_sig_thin_s_m_s[!grepl("EPHA", mean_sig_thin_s_m_s$interacting_pair),]
+mean_sig_thin_s_m_s =mean_sig_thin_s_m_s[!grepl("EFN", mean_sig_thin_s_m_s$interacting_pair),]
+#int_mean_s_m_s =int_mean_s_m_s[!grepl("FZD", int_mean_s_m_s$interacting_pair),]
+#int_mean_s_m_s =int_mean_s_m_s[!grepl("TGF", int_mean_s_m_s$interacting_pair),]
+
+all_inter = rbind(mean_sig_s_m,mean_sig_thin_s_m)
+all_inter$name = paste(all_inter$interacting_pair,all_inter$variable, sep = "_")
+
+
+my_path = c(
+  
+  "SELP_CD34_Endo_6.Lymph_13",
+  "CCL7_ACKR1_Deci_15.Endo_6",
+  "TIMP1_FGFR2_Deci_15.Dec_0",
+  "ACKR3_CXCL12_Lymph_13.Dec_1",
+  "ACKR3_CXCL12_Lymph_13.Dec_17",
+  "ACKR3_CXCL12_Endo_6.Dec_1",
+  "CCL7_ACKR1_Dec_0.Endo_6",
+  "ACKR3_CXCL12_Lymph_13.Dec_0",
+  "CCL7_ACKR1_Dec_1.Endo_6",
+  "ACKR3_CXCL12_Endo_6.Deci_15",
+  "ACVR_1B2A receptor_INHBB_Endo_6.Dec_1",
+  "ACVR_1B2A receptor_INHBB_Deci_15.Dec_1",
+  "NRG1_LGR4_Dec_0.Lymph_13",
+  "IL6 receptor_IL6_Lymph_13.Deci_15",
+  "IL6 receptor_IL6_Endo_6.Deci_15",
+  "NRG1_LGR4_Dec_17.Lymph_13",
+  
+
+ 
+  "COL1A1_a1b1 complex_Dec_17.Dec_1",
+  "COL1A1_a1b1 complex_Dec_17.Dec_0",
+  "COL1A1_a1b1 complex_Dec_0.Dec_1",
+  "COL1A1_a1b1 complex_Dec_0.Dec_0",
+  "FN1_a11b1 complex_Deci_15.Deci_15",
+  "FBN1_a5b1 complex_Dec_17.Dec_0",
+  "FBN1_a5b1 complex_Dec_17.Dec_1",
+  "FBN1_a5b1 complex_Dec_0.Dec_17",
+  "FBN1_a5b1 complex_Dec_0.Dec_0",
+  "FBN1_a5b1 complex_Dec_0.Dec_1",
+  "FLT1_VEGFB_Endo_6.Endo_6",
+  "VEGFD_KDR_Deci_15.Endo_6",
+  "VEGFD_KDR_Dec_0.Endo_6",
+  "VEGFD_KDR_Dec_17.Endo_6",
+  "TGFB1_TGFBR3_Endo_6.Dec_17",
+  "TGFB1_TGFBR3_Deci_15.Dec_17",
+  "TGFB1_TGFBR3_Dec_1.Dec_0",
+  "BMP2_SMO_Dec_0.Lymph_13",
+  "WNT5A_ROR1_Dec_0.Dec_1",
+  "WNT5A_ROR1_Dec_0.Dec_0"
+)
+
+
+
+
+all_inter_1 = all_inter[all_inter$name %in% my_path,]
+#all_inter_1 = all_inter[all_inter$interacting_pair %in% my_path,]
+
+#all_inter_1 = all_inter_1[all_inter_1$variable %in% m,]
+
+#### reorder by levels
+all_inter_1$interacting_pair = factor(all_inter_1$interacting_pair, levels = rev(c("COL1A1_a1b1 complex", "FBN1_a5b1 complex","VEGFD_KDR","TGFB1_TGFBR3","FN1_a11b1 complex", "FLT1_VEGFB", "BMP2_SMO","WNT5A_ROR1",
+  
+  "TIMP1_FGFR2",
+  "SELP_CD34","IL6 receptor_IL6", "CCL7_ACKR1", "ACVR_1B2A receptor_INHBB", "ACKR3_CXCL12" ,"NRG1_LGR4")))
+
+
+all_inter_1$variable = as.character(all_inter_1$variable)
+all_inter_1$variable = factor(all_inter_1$variable, levels = c(
+  "Dec_0.Dec_0", "Dec_0.Dec_1","Dec_0.Dec_17",
+  "Dec_17.Dec_0","Dec_17.Dec_1","Dec_17.Endo_6","Dec_1.Dec_0","Deci_15.Dec_17","Endo_6.Dec_17","Deci_15.Deci_15","Endo_6.Endo_6",
+  "Dec_0.Endo_6","Dec_0.Lymph_13","Deci_15.Endo_6",
+  "Dec_17.Lymph_13",   "Lymph_13.Dec_0","Lymph_13.Dec_1" ,"Lymph_13.Dec_17","Endo_6.Dec_1","Deci_15.Dec_1",
+  "Dec_1.Endo_6",  
+   "Lymph_13.Deci_15", "Endo_6.Deci_15",   "Endo_6.Lymph_13", "Deci_15.Dec_0" ))
+
+all_inter_1$logvalue = log(all_inter_1$value,2)
+
+all_inter_1 %>% ggplot(aes(x= variable , y = interacting_pair, color = rank  , size = logvalue )) + 
+  geom_point() + 
+  cowplot::theme_cowplot() + 
+  theme(axis.line  = element_blank()) +
+  ylab('') +
+  theme(axis.ticks = element_blank())+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  scale_color_gradientn(colours = viridis(100),limits = c(0.00,0.05), oob = scales::squish, name = 'pValue') +facet_grid("flag") 
+
+
+
+
+
+#########  cellchat  ###############
+
+######  run in R but not in Rstudio
+
+library(CellChat)
+library(ggplot2)
+library(ggalluvial)
+library(svglite)
+options(stringsAsFactors = FALSE)
+library(Seurat)
+library(mindr)
+(out <- capture.output(str(cellchat)))
+out2 <- paste(out, collapse="\n")
+mm(gsub("\\.\\.@","# ",gsub("\\.\\. ","#",out2)),type ="text")
+
+
+D16_19_s = readRDS("/Volumes/My_Disk_2/Deng_NGS_data/dwb_data/D16_D19_scRNA/F20FTSSCWLJ4147_XAOrwmR/Fastq/clean_mito/D16_19_deci_mito_new_res04_07052022.rds")
+
+Nor_exp = subset(D16_19_s, sub_pup == "D16")
+Nor_exp = subset(D16_19_s, sub_pup == "D19")
+
+data.input <- GetAssayData(Nor_exp, assay = "RNA", slot = "data") # normalized data matrix
+labels <- Idents(Nor_exp)
+identity <- data.frame(group = labels, row.names = names(labels)) # create a dataframe of the cell labels
+
+cellchat <- createCellChat(object = data.input, meta = identity, group.by = "group")
+
+cellchat <- addMeta(cellchat, meta = identity, meta.name = "group")
+cellchat <- setIdent(cellchat, ident.use = "group") # set "labels" as default cell identity
+levels(cellchat@idents) # show factor levels of the cell labels
+
+groupSize <- as.numeric(table(cellchat@idents)) # number of cells in each cell group
+
+CellChatDB <- CellChatDB.mouse # use CellChatDB.human if running on mouse data
+CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling") # use Secreted Signaling for cell-cell communication analysis
+
+
+cellchat@DB <- CellChatDB.use # set the used database in the object
+
+
+
+
+cellchat <- subsetData(cellchat) # subset the expression data of signaling genes for saving computation cost
+future::plan("multiprocess", workers = 12) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#cellchat <- projectData(cellchat, PPI.human)
+cellchat <- projectData(cellchat, PPI.mouse)
+
+cellchat <- computeCommunProb(cellchat)  
+
+cellchat <- computeCommunProbPathway(cellchat)
+cellchat <- aggregateNet(cellchat)
+
+# mynetVisual_aggregate(cellchat, signaling = c("MIF"), layout = "circle", vertex.size = groupSize,pt.title=20,vertex.label.cex = 1.7)
+cellchat@netP$pathways
+pathways.show = cellchat@netP$pathways
+netAnalysis_contribution(cellchat, signaling = pathways.show)
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+
+data.dir <- "/Volumes/My_Disk_2/Deng_NGS_data/dwb_data/D16_D19_scRNA/F20FTSSCWLJ4147_XAOrwmR/Fastq/clean_mito/cellchat_res04_2/D16"
+
+dir.create(data.dir)
+setwd(data.dir)
+
+vertex.receiver = seq(1,9)
+for (i in 1:length(pathways.show)) {
+  netVisual(cellchat, signaling = pathways.show[i], vertex.receiver = vertex.receiver, vertex.size = groupSize)
+  grDevices::pdf(file = paste0("cellSignalingRole_",pathways.show[i],".pdf"))
+  netAnalysis_computeCentrality(cellchat, pathways.show[i], slot.name = "netP")
+  dev.off()
+}
+
+for (i in 1:length(pathways.show)) {
+  tiff(file = paste0("cell_Signaling_circle_",pathways.show[i],".tif"),width=12, height=8,units="in", compression="lzw", res=150)
+  netVisual_aggregate(cellchat, signaling =  pathways.show[i], layout = "circle", vertex.size = groupSize)
+  dev.off()
+}
+
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = 5 ,width = 4, height = 10, font.size = 8)
+
+netAnalysis_river(cellchat, pattern = "outgoing")
+netAnalysis_dot(cellchat, pattern = "outgoing")
+
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = 4 ,width = 8, height = 10, font.size = 8)
+library(ggalluvial)
+netAnalysis_river(cellchat, pattern = "incoming")
+netAnalysis_dot(cellchat, pattern = "incoming")
+
+
+cellchat <- computeNetSimilarity(cellchat, type = "functional", thresh = 0.25)
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional", k = 5)
+netVisual_embedding(cellchat, type = "functional", pathway.remove.show = F, label.size = 3.5)
+netVisual_embeddingZoomIn(cellchat, type = "functional", nCol = 2)
+
+cellchat <- computeNetSimilarity(cellchat, type = "structural", thresh = 0.25)
+cellchat <- netEmbedding(cellchat, type = "structural")
+cellchat <- netClustering(cellchat, type = "structural")
+netVisual_embedding(cellchat, type = "structural", label.size = 3.5)
+netVisual_embeddingZoomIn(cellchat, type = "structural", nCol = 2)
+
+
+
+
+#######   RNA velocity  #######
+setwd("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/myscvelo_2/")
+
+library(Seurat)
+D16 = readRDS("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/D16_19_deci_mito_new_res04_07052022.rds")
+
+
+D16$barcode <- colnames(D16)
+D16$UMAP_1 <- D16@reductions$umap@cell.embeddings[,1]
+D16$UMAP_2 <- D16@reductions$umap@cell.embeddings[,2]
+D16$cluster = Idents(D16)
+write.csv(D16@meta.data, file='metadata.csv', quote=F, row.names=F)
+
+
+# write expression counts matrix
+library(Matrix)
+counts_matrix <- GetAssayData(D16, assay='RNA', slot='counts')
+writeMM(counts_matrix, file=('counts.mtx'))
+
+# write dimesnionality reduction matrix, in this example case pca matrix
+write.csv(D16@reductions$pca@cell.embeddings, file='pca.csv',quote=F, row.names=F)
+
+# write gene names
+write.table(
+  data.frame('gene'=rownames(counts_matrix)),file='gene_names.csv',
+  quote=F,row.names=F,col.names=F
+)
+
+
+####   <=======   goto jupyter notebook for scvelo
+
+
+
+
+######   TF in different cell type  #######
+setwd("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA")
+
+library(Seurat)
+D16 = readRDS("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/D16_19_deci_mito_new_res04_07052022.rds")
+TF = read.table("/Users/wenbo/data/F/New_genome_data/All_TFs/all_tfs.txt", sep = "\t", header = T)
+
+DefaultAssay(D16) = "RNA"
+ave_exp_N  = AverageExpression(D16)
+exp_m = ave_exp_N$RNA
+exp_m_s = exp_m[row.names(exp_m) %in% TF$Gene_name,]
+
+exp_m_s = exp_m_s[rowSums(exp_m_s)>2, ]
+exp_m_s_m = as.matrix(exp_m_s) 
+
+mat_scaled = t(apply(exp_m_s_m, 1, scale))
+colnames(mat_scaled) = colnames(exp_m_s_m)
+  
+library(ComplexHeatmap)
+library(viridis)
+my_col = colorRampPalette(brewer.pal(name="YlGnBu", n = 9))(18) 
+
+Heatmap(mat_scaled, name="TF" , 
+  #col =viridis(100),
+  col =viridis(100),
+  show_row_names = TRUE, cluster_columns = T,cluster_rows = T, gap = unit(0, "mm"),
+  show_column_names = TRUE,
+  km = 0,
+  #row_title_gp = gpar(fontsize = 2),
+  rect_gp = gpar(col = "white", lty = 0, lwd = 0)
+  
+) 
+
+
+
+
+# DefaultAssay(D16) = "RNA"
+D16_1 <- ScaleData(object = D16, verbose = TRUE)
+D16_TF = subset(D16_1, features = TF$Gene_name)
+D16_TF = subset(D16_TF, my_cluster == "Dec_0" | my_cluster == "Dec_1" |my_cluster == "Dec_2"| my_cluster == "Deci_14"| my_cluster == "Deci_15" |my_cluster == "Dec_17" )
+N_all_markers <- FindAllMarkers(object = D16_TF, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.2)
+top10 <-N_all_markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_log2FC)
+
+D16_TF@meta.data$clusters = Idents(D16_TF)
+my_gene = c(top10$gene,"Esr1","Hand2","Wt1")
+my_gene = c("Rorb" ,"Hand2", "Pgr"  ,"Esr1", "Hoxa10" , "Sox4" , "Cebpd",
+  "Spi1"  ,  "Irf8"   , "Mef2c", "Id2" , "Rora" ,"Elf3"   , "Sox9" ,   "Mecom"  , "Ehf"  ,
+  "Sox17","Fli1", "Meox1" ,"Irf4" , "Xbp1" , "Runx2",  "Sox6" ,   "Gata6",
+  "Id4" ,"Cenpb","Smad4","Tbx2","Nr2f2","Tfap2c","Cdx2","Prox1","Nfat5","Cebpb","Fosl2",
+  "Gata2","Hes1","Msx1"
+  )
+# [1] "Rorb"    "Creb3l1" "Tcf4"    "Maf"     "Ar"      "Nfix"    "Tcf21"   "Creb5"   "Pgr"     "Irf1"    "Runx1"   "Hoxa10"  "Sox4"    "Cebpd"   "Klf9"    "Mafb"   
+# [17] "Spi1"    "Irf8"    "Mef2c"   "Id2"     "Ets1"    "Id2"     "Runx3"   "Rora"    "Nr4a1"   "Elf3"    "Sox9"    "Mecom"   "Ehf"     "Klf5"    "Sox17"   "Fli1"   
+# [33] "Meox1"   "Mef2c"   "Tcf4"    "Mef2c"   "Irf4"    "Xbp1"    "Runx2"   "Prdm1"   "Sox6"    "Gata6"   "Jdp2"    "Hand2"   "Wt1"     "Id4"     "Id2"     "Hand2"  
+# [49] "Cenpb"   "Smad4"   "Tbx2"    "Mef2c"   "Ebf1"    "Id4"     "Nr2f2"   "Foxo4"   "Tfap2c"  "Cdx2"    "Hic2"    "Mafb"    "Prox1"   "Meox1"   "Elk3"    "Nr2f2"  
+# [65] "Nfat5"   "Spi1"    "Cebpb"   "Junb"    "Fosl2"   "Jdp2"    "Egr3"    "Gata2"   "Nr4a1"   "Hes1"    "Elf1"    "Runx3"   "Ets1"    "Id2"     "Rora"    "Nr4a1"  
+# [81] "Sox17"   "Elf3"    "Mecom"   "Msx1"    "Id2"     "Id2"     "Irf8"   
+library("scales")
+library("ggsci")
+show_col(pal_lancet("lanonc")(9))
+my_col = colorRampPalette(pal_lancet("lanonc")(9))(18)
+DoHeatmap(D16_TF, features = my_gene, group.by='clusters', label=FALSE ) + scale_fill_gradientn(colors=viridis(256))
+
+#D16_TF <- ScaleData(object = D16_TF, verbose = TRUE)
+
+
+
+my_genes = unique(top10$gene)
+
+my_col = viridis(256)
+library(viridis)
+DefaultAssay(D16_TF) = "RNA"
+
+levels(D16_TF)  = c(
+
+  "Deci_1" , "Deci_0","Deci_2" ,  "Peri_10", "Myofib_9",
+  "Endo_6","Lyph_12",
+  "Epi_5","Epi_16","Meso_8" ,"TGC_11",
+  "Mac_3" ,  "NKT_4",  "prolif_NKT_15", "B_cell_7", "Neu_13", "Mast_14",  "NK_17"
+)
+
+
+
+DotPlot(D16_TF,
+  assay = NULL,
+  my_genes,
+  #cols = viridis(10)
+  cols = c("white","#C51B7D"),
+
+)  + RotatedAxis() + coord_flip()
+
+
+
+
+
+##########  RNA-Seq from sorted str  10-31-2022  ####
+
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(UpSetR)
+library(ChIPseeker)
+
+library("dplyr")
+library("ggplot2")
+
+
+my_rna = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_D19_sorted_deci/D16_D19_deci_annoed_clean_pVal_2.txt", sep = "\t", header = T)
+
+
+###  heatmap 
+library(ComplexHeatmap)
+library(pheatmap)
+library(gplots)
+library(viridis)
+
+my_hp = my_rna[(my_rna$Fold_D16_19 > 2 & my_rna$pValue_D16_19< 0.05) | (my_rna$Fold_D16_19 <  0.5 & my_rna$pValue_D16_19< 0.05 ) ,]
+my_hm_s = my_hp[,c(16:22)]
+row.names(my_hm_s) = my_hp$genes
+
+b = as.matrix(my_hm_s)
+#b = b[rowSums(b) > 0,]
+mat_scaled = t(apply(b, 1, scale))
+#row.names(mat_scaled)= secret_s$Symbol
+colnames(mat_scaled)= colnames(b)
+mat_scaled = mat_scaled[,-4]
+
+Heatmap(mat_scaled, name="DEG" , 
+  col =viridis(100), 
+  km = 2,
+  show_row_names = TRUE, cluster_columns = F,cluster_rows = T, 
+  gap = unit(0, "mm"),show_column_names = TRUE,rect_gp = gpar(col = "white", lty = 0, lwd = 0.1)) 
+
+
+## vocalno
+exp = my_rna
+exp$sig[(exp$pValue_D16_19 > 0.05)|(exp$Fold_D16_19 < 2) & exp$Fold_D16_19 > 0.5] = "no"
+exp$sig[exp$pValue_D16_19 <= 0.05 & exp$Fold_D16_19 >= 2] ="up"
+exp$sig[exp$pValue_D16_19 <= 0.05 & exp$Fold_D16_19 <= 0.5] = "down"
+exp=exp[rowSums(exp[,9:12])>4,]
+
+v = ggplot(exp,aes(log2(Fold_D16_19),-log(pValue_D16_19,10),colour = sig))+geom_point()+
+  scale_color_manual(values =c("#006fe2","grey","#ff018f"))
+v=v + geom_vline(xintercept=c(log2(0.5),log2(2)),linetype="dotted",size=1, col = "black")+
+  geom_hline(yintercept=-log(0.05,10),col="black",linetype="dotted",size= 1) + xlim(-5,5)+ylim(0,4)
+v+theme_set(theme_bw()) +theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) 
+
+
+
+
+my_rna= my_rna[rowSums(my_rna[,16:22])> 10,]
+up = my_rna[my_rna$Fold_D16_19 > 2 & my_rna$pValue_D16_19< 0.05,]
+down = my_rna[my_rna$Fold_D16_19 <  0.5 & my_rna$pValue_D16_19< 0.05,]
+
+ID_1 <- bitr(up$genes, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+
+ID_2 <- bitr(down$genes, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_comp = list(
+  up =ID_1$ENTREZID, 
+  down =ID_2$ENTREZID
+  #DS14 = ID_66$ENTREZID
+) 
+
+x <- compareCluster(my_comp, fun = "enrichKEGG", organism     = "mmu")
+
+library("RColorBrewer")
+
+library(viridis)
+x@compareClusterResult$logpVal = -log(x@compareClusterResult$p.adjust,10)
+
+dotplot(x, showCategory = 20,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+x=DOSE::setReadable(x, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+write.table(x@compareClusterResult, "Sorted_RNA_Seq_KEGG_genes_10312022.txt", sep = "\t")
+
+FeaturePlot(D16, c("Esrp1","Esrp2","Dlx5","Dlx6"), split.by = "sub_pup", max.cutoff = 0.5)
+DimPlot(object = D16, reduction = "umap", label = T)
+
+
+y <- compareCluster(my_comp, fun = "enrichGO", 
+  OrgDb  = "org.Mm.eg.db",
+  ont        = "BP"
+  )
+y@compareClusterResult$logpVal = -log(y@compareClusterResult$p.adjust,10)
+dotplot(y, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+
+y=DOSE::setReadable(y, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+
+
+
+###  whole decidua
+rna_exp_2 = read.table("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_D19_sorted_deci/D16_D17_D18_D19_FPKM_06232020_annoed.txt", header = T, sep = "\t")
+my_rna = rna_exp_2[,c(1:4,11:13,18:19)]
+
+#my_rna= my_rna[rowSums(my_rna[,2:7])>5,]
+up = my_rna[my_rna$Fold_D19 > 2 ,]
+down = my_rna[my_rna$Fold_D19 <  0.5 ,]
+
+ID_1 <- bitr(up$genes, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+
+ID_2 <- bitr(down$genes, fromType = "SYMBOL",
+  toType = c( "ENTREZID"),
+  OrgDb = org.Mm.eg.db
+)
+
+my_comp = list(
+  up =ID_1$ENTREZID, 
+  down =ID_2$ENTREZID
+  #DS14 = ID_66$ENTREZID
+) 
+
+x <- compareCluster(my_comp, fun = "enrichKEGG", organism     = "mmu")
+
+library("RColorBrewer")
+library(viridis)
+x@compareClusterResult$logpVal = -log(x@compareClusterResult$p.adjust,10)
+
+dotplot(x, showCategory = 20,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+
+x=DOSE::setReadable(x, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+write.table(x@compareClusterResult, "Whole_deci_D16_D19_KEGG_gene_10312022_1.txt", sep = "\t")
+
+FeaturePlot(D16, c("Apoa1","Apoa2","Apob","Star"), split.by = "sub_pup", max.cutoff = 0.5)
+DimPlot(object = D16, reduction = "umap", label = T)
+
+y <- compareCluster(my_comp, fun = "enrichGO", 
+  OrgDb  = "org.Mm.eg.db",
+  ont        = "BP"
+)
+y@compareClusterResult$logpVal = -log(y@compareClusterResult$p.adjust,10)
+dotplot(y, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+y=DOSE::setReadable(y, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+
+y <- compareCluster(my_comp, fun = "enrichGO", 
+  OrgDb  = "org.Mm.eg.db",
+  ont        = "MF"
+)
+y@compareClusterResult$logpVal = -log(y@compareClusterResult$p.adjust,10)
+dotplot(y, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+y=DOSE::setReadable(y, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+
+
+
+y <- compareCluster(my_comp, fun = "enrichGO", 
+  OrgDb  = "org.Mm.eg.db",
+  ont        = "CC"
+)
+y@compareClusterResult$logpVal = -log(y@compareClusterResult$p.adjust,10)
+dotplot(y, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+y=DOSE::setReadable(y, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+
+y <- compareCluster(my_comp, fun = "enrichGO", 
+  OrgDb  = "org.Mm.eg.db"
+)
+y@compareClusterResult$logpVal = -log(y@compareClusterResult$p.adjust,10)
+dotplot(y, showCategory = 10,   color = "logpVal",) + scale_color_gradientn(colours = rev(viridis(100))) +theme_set(theme_bw())+theme(panel.grid.major=element_line(colour=NA)) + theme(panel.grid=element_blank()) #, limits = c(1.5,3))
+y=DOSE::setReadable(y, OrgDb='org.Mm.eg.db',keyType='ENTREZID')
+
+
+
+
+
+
+############  D16 D19 NicheNet  #########
+
+library(Seurat)
+library(nichenetr)
+library(tidyverse)
+library("biomaRt")
+setwd("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022")
+library(Seurat)
+D16 = readRDS("/Users/wenbo/data/F/New_genome_data/Wang hb/My_lab_data/D16_19_scRNA/3-23-2022/D16_19_deci_mito_new_res04_07052022.rds")
+DefaultAssay(D16) = "RNA"
+library(sctransform)
+D16 <- SCTransform(D16, vars.to.regress = "percent.mt", verbose = T)
+
+#D16_SCT = D16
+ligand_target_matrix = readRDS("/Users/wenbo/data/F/New_genome_data/NicheNet_datasets/ligand_target_matrix.rds")
+lr_network = readRDS("/Users/wenbo/data/F/New_genome_data/NicheNet_datasets/lr_network.rds")
+weighted_networks = readRDS("/Users/wenbo/data/F/New_genome_data/NicheNet_datasets/weighted_networks.rds")
+
+D16@meta.data$my_cluster %>% table()
+
+
+nichenet_output = nichenet_seuratobj_aggregate(
+  seurat_obj = D16, 
+  receiver = c ("Dec_0","Dec_1","Dec_2"),
+  condition_colname = "sub_pup", condition_oi = "D16", condition_reference = "D19", 
+  sender = c ("Endo_6","Lymph_13"),  
+  assay_oi = "RNA" ,
+  ligand_target_matrix = ligand_target_matrix, lr_network = lr_network, weighted_networks = weighted_networks, organism = "mouse")
+
+nichenet_output$ligand_activities
+nichenet_output$top_ligands
+nichenet_output$ligand_expression_dotplot + scale_fill_gradient2(low = "whitesmoke",  high = "#C51B7D")
+
+
+nichenet_output$ligand_differential_expression_heatmap + scale_fill_gradient2(low = "whitesmoke",  high = "#C51B7D")
+
+nichenet_output$ligand_target_heatmap
+nichenet_output$ligand_target_heatmap + scale_fill_gradient2(low = "whitesmoke",  high = "royalblue", breaks = c(0,0.0045,0.009)) + xlab("anti-LCMV response genes in CD8 T cells") + ylab("Prioritized immmune cell ligands")
+
+#nichenet_output$ligand_target_matrix %>% .[1:10,1:6]
+nichenet_output$ligand_target_df # weight column = regulatory potential
+nichenet_output$top_targets
+DotPlot(D16 %>% subset(idents = "Endo_6"), features = nichenet_output$top_targets %>% rev(), split.by = "sub_pup") + RotatedAxis()
+VlnPlot(D16 %>% subset(idents = "Endo_6"), features = c("Ltb","Acta2","Lpl"), split.by = "sub_pup",    pt.size = 0, combine = FALSE)
+
+nichenet_output$ligand_activity_target_heatmap 
+
+nichenet_output$ligand_receptor_heatmap +  scale_fill_gradient2(low = "whitesmoke",  high = "#C51B7D")
+
+
+
+#nichenet_output$ligand_receptor_matrix %>% .[1:0,1:6]
+
+nichenet_output$ligand_receptor_df 
+nichenet_output$top_receptors
+DotPlot(D16 %>% subset(idents = "NK_4"), features = nichenet_output$top_receptors %>% rev(), split.by = "sub_pup") + RotatedAxis()+  scale_fill_gradient2(low = "whitesmoke",  high = "#C51B7D")
+
+nichenet_output$ligand_receptor_heatmap_bonafide
+
+nichenet_output$ligand_receptor_matrix_bonafide
+
+nichenet_output$ligand_target_heatmap
+L_T = nichenet_output$ligand_target_matrix
+
+L_R = nichenet_output$ligand_receptor_matrix
+L_R = t(L_R)
+
+L_R  = L_R[row.names(L_R) %in% row.names(L_T),]
+
+#L_R = as.data.frame(L_R)
+m = match(row.names(L_T),row.names(L_R))
+#row.names(L_R) = row.names(L_T)[m]
+L_R = L_R[m,]
+L_R = L_R[rev(row.names(L_R)),]
+
+
+#my_hm = nichenet_output$ligand_receptor_matrix[1:45,]
+#my_hm = t(my_hm)
+
+library(RColorBrewer)
+library(ComplexHeatmap)
+my_col = rev(colorRampPalette(brewer.pal(11,"PiYG")[1:6])(100))
+
+Heatmap(L_R, name="cor" , 
+  #col =viridis(256),
+  col =my_col,
+  #col = scale_fill_gradient2(low = "whitesmoke",  high = "purple", breaks = c(0,0.005,0.01)),
+  show_row_names = TRUE, cluster_columns = F,cluster_rows = F, gap = unit(0, "mm"),
+  show_column_names = TRUE,
+  km = 0,
+  #row_title_gp = gpar(fontsize = 2),
+  rect_gp = gpar(col = "white", lty = 1, lwd = 1)) 
+
+
+
+
+
+
+
+
+
+
+
